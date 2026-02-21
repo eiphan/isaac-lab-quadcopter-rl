@@ -4,9 +4,11 @@ Quadcopter navigates through waypoints using PD controller - extended from Phase
 
 ## What This Does
 
-The quadcopter flies through a sequence of 5 waypoints using the same PD controller from Phase 1, but now tracking moving targets instead of a fixed height.
+The quadcopter tracks waypoints in the **vertical direction (Z-axis)** using the PD controller from Phase 1. 
 
-**Current Status:** ✅ Working - Quadcopter hovers successfully
+**Current Implementation:** The controller navigates to different heights but does not move horizontally (X/Y movement). This is a stepping stone between Phase 1 (fixed height hover) and full 3D navigation.
+
+**Current Status:** ✅ Working - Quadcopter adjusts height to track waypoint Z-coordinates
 
 ## How to Run
 
@@ -17,15 +19,19 @@ cd 02_waypoint_pd
 & "C:\isaac-sim\isaac-sim-standalone-5.1.0-windows-x86_64\python.bat" waypoint_simple.py
 ```
 
-## Waypoint Path
+## Waypoint Path (Vertical Navigation)
+
+The controller tracks the Z-coordinate (height) of each waypoint:
 
 ```
-1. [0.0, 0.0, 1.5]m  → Start (hover)
-2. [2.0, 0.0, 1.5]m  → Move right 2m
-3. [2.0, 2.0, 2.0]m  → Move forward 2m, up 0.5m
-4. [0.0, 2.0, 2.0]m  → Move left 2m
-5. [0.0, 0.0, 1.5]m  → Return to start
+1. [0.0, 0.0, 1.5]m  → Start at 1.5m height
+2. [2.0, 0.0, 1.5]m  → Stay at 1.5m (same height)
+3. [2.0, 2.0, 2.0]m  → Rise to 2.0m
+4. [0.0, 2.0, 2.0]m  → Stay at 2.0m
+5. [0.0, 0.0, 1.5]m  → Return to 1.5m
 ```
+
+**Note:** Current implementation only controls vertical position (Z). The quadcopter will adjust its height according to the waypoint's Z-coordinate, but will not move horizontally (X/Y).
 
 ## Key Differences from Phase 1
 
@@ -169,12 +175,32 @@ self.waypoint_radius = 0.5  # Larger = easier to reach
 ## Current Results
 
 **As of latest test:**
-- Quadcopter successfully hovers at start position
-- Terminal shows waypoint progress
-- Controller is stable
-- Force application working correctly
+- ✅ Quadcopter successfully hovers at start position (1.5m)
+- ✅ Adjusts height when waypoint Z-coordinate changes
+- ✅ Terminal shows waypoint progress
+- ✅ Controller is stable
+- ✅ Force application working correctly
 
-**Next step:** Tune controller gains for faster waypoint navigation if needed.
+**Current Limitation:** Only vertical (Z-axis) control is implemented. The quadcopter tracks waypoint heights but does not move horizontally.
+
+**Why This Limitation?**
+
+The current simplified implementation extends Phase 1's vertical PD controller. Adding full 3D navigation requires:
+1. Separate PD controllers for X, Y, Z axes
+2. Attitude control (roll, pitch, yaw)
+3. More complex force distribution across rotors
+
+This will be implemented in Phase 3 when we use Isaac Lab's framework for full 6-DOF control with RL.
+
+## Current Results
+
+**As of latest test:**
+- Quadcopter hovers at 1.5m height
+- Successfully tracks vertical waypoint changes
+- Terminal shows waypoint sequencing
+- Stable PD control in Z-axis
+
+**Next Enhancement:** Add XY position control for full 3D waypoint navigation (Phase 3).
 
 ## Troubleshooting
 
