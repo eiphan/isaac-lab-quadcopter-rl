@@ -156,8 +156,17 @@ class WaypointQuadcopter:
         
         # Clamp thrust to valid range
         thrust = np.clip(thrust_z, 0, self.max_thrust)
+
+        #Full 3D force vector - apply mass scaling to all axes
+        force = self.mass * control
+
+        #Gravity compensation only in Z (gravity has no effect in X/Y)
+        force[2] += gravity_compensation
+
+        # Clamp all axes independently (for simplicity, we only apply thrust in Z, but this shows how to extend to 3D control)
+        force = np.clip(force, -self.max_thrust, self.max_thrust)
         
-        return thrust
+        return force
     
     def apply_control(self):
         """Apply PD control to reach current waypoint."""
@@ -169,7 +178,7 @@ class WaypointQuadcopter:
         self.check_waypoint_reached(position)
         
         # Compute control
-        thrust = self.compute_control(position, velocity)
+        force = self.compute_control(position, velocity)
         
         # Apply force directly using USD/PhysX
         from omni.isaac.core.utils.prims import get_prim_at_path
@@ -182,10 +191,14 @@ class WaypointQuadcopter:
             PhysxSchema.PhysxForceAPI.Apply(prim)
         
         force_api = PhysxSchema.PhysxForceAPI(prim)
-        force_api.GetForceEnabledAttr().Set(True)
-        force_api.GetForceAttr().Set(Gf.Vec3f(0.0, 0.0, float(thrust)))
-        force_api.GetWorldFrameEnabledAttr().Set(True)
 
+        #force_api.GetForceEnabledAttr().Set(True)
+        #force_api.GetForceAttr().Set(Gf.Vec3f(0.0, 0.0, float(thrust)))
+        #force_api.GetWorldFrameEnabledAttr().Set(True)
+        
+        force_api.GetForceEnabledAttr().Set(True)
+        force_api.GetForceAttr().Set(Gf.Vec3f(float(force[0]), float(force[1]), float(force[2])))
+        force_api.GetWorldFrameEnabledAttr().Set(True)
 
 def main():
     """Run Phase 2: Waypoint Navigation."""
